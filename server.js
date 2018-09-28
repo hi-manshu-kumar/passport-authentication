@@ -4,8 +4,15 @@ const port = process.env.PORT || 1234;
 const app = express();
 const passport = require('passport');
 const mongoose = require('mongoose');
+const LocalStrategy = require('passport-local').Strategy;
 
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(function(req,res,next){
+    res.header("Access-Control-Allow-Origin","*");
+    res.header("Access-Control-Allow-Headers","Origin,X-Requested-With,Content-Type,Accept");
+    next();  //compulsory so that control can use next middleware
+  })
 
 app.use(passport,initilize());
 app.use(passport.session());
@@ -31,17 +38,42 @@ const UserDetail = new Schema({
 
 const UserDetails = mongoose.model('userInfo', UserDetail, 'userInfo');
 
-// app.get('/', (req, res)=> {
-//     res.sendFile('index.html', { root: __dirname})
-// });
+passport.use(new LocalStrategy(
+    function (username, password, done) {
+        UserDetails.findOne({
+            username: username
+        }, function(err, user) {
+            if(err) {
+                return done(err);
+            }
 
-app.use(express.static("public"));
+            if(!user){
+                return done(null, false);
+            }
+
+            if (user.password != password) {
+                return done(null, false);
+            }
+
+            return done(null, user);
+        });
+    }
+));
+
+app.post('/', 
+    passport.authenticate('local', { failureRedirect: '/error'}),
+    function(req, res) {
+        res.redirect('/sucess?username=' + req.user.username);
+    });
 
 
-app.use(function(req,res,next){
-    res.header("Access-Control-Allow-Origin","*");
-    res.header("Access-Control-Allow-Headers","Origin,X-Requested-With,Content-Type,Accept");
-    next();  //compulsory so that control can use next middleware
-  })
+app.get('/', (req, res)=> {
+    res.sendFile('index.html', { root: __dirname})
+});
+
+// app.use(express.static("public"));
+
+
+
 
 app.listen(port , () => console.log(` server running on port  ${port}...`));
