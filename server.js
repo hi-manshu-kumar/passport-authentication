@@ -14,12 +14,17 @@ app.use(function(req,res,next){
     next();  //compulsory so that control can use next middleware
   })
 
-app.use(passport,initilize());
+app.use(passport.initialize());
 app.use(passport.session());
 
 app.get('/success', (req,res) => res.send("Welcome " + req.query.username + "!!"));
-app.get('/error', (req ,res) => res.send("error logging in"));
+app.get('/error', (req ,res) => res.send("Username and password is wrong !!!"));
 
+
+passport.serializeUser(function(user, cb) {
+    cb(null, user.id);
+  });
+  
 
 passport.deserializeUser(function (id, cb){
     User.findById(id, function(err, user){
@@ -63,12 +68,14 @@ passport.use(new LocalStrategy(
 app.post('/', 
     passport.authenticate('local', { failureRedirect: '/error'}),
     function(req, res) {
-        res.redirect('/sucess?username=' + req.user.username);
+        res.redirect('/success?username=' + req.user.username);
     });
 
 
 app.get('/', (req, res)=> {
-    res.sendFile('index.html', { root: __dirname})
+    res.sendFile('index.html', { root: __dirname 
+        // + '/public/' 
+    })
 });
 
 // app.use(express.static("public"));
