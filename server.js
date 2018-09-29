@@ -1,33 +1,35 @@
 const express = require("express");
-const bodyParser = require("body-parser"); 
+const bodyParser = require("body-parser");
 const port = process.env.PORT || 1234;
 const app = express();
 const passport = require('passport');
 const mongoose = require('mongoose');
 const LocalStrategy = require('passport-local').Strategy;
 
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 
-app.use(function(req,res,next){
-    res.header("Access-Control-Allow-Origin","*");
-    res.header("Access-Control-Allow-Headers","Origin,X-Requested-With,Content-Type,Accept");
-    next();  //compulsory so that control can use next middleware
-  })
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin,X-Requested-With,Content-Type,Accept");
+    next(); //compulsory so that control can use next middleware
+})
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get('/success', (req,res) => res.send("Welcome " + req.query.username + "!!"));
-app.get('/error', (req ,res) => res.send("Username and password is wrong !!!"));
+app.get('/success', (req, res) => res.send("Welcome " + req.query.username + "!!"));
+app.get('/error', (req, res) => res.send("Username and password is wrong !!!"));
 
 
-passport.serializeUser(function(user, cb) {
+passport.serializeUser(function (user, cb) {
     cb(null, user.id);
-  });
-  
+});
 
-passport.deserializeUser(function (id, cb){
-    User.findById(id, function(err, user){
+
+passport.deserializeUser(function (id, cb) {
+    User.findById(id, function (err, user) {
         cb(err, user);
     });
 })
@@ -47,12 +49,12 @@ passport.use(new LocalStrategy(
     function (username, password, done) {
         UserDetails.findOne({
             username: username
-        }, function(err, user) {
-            if(err) {
+        }, function (err, user) {
+            if (err) {
                 return done(err);
             }
 
-            if(!user){
+            if (!user) {
                 return done(null, false);
             }
 
@@ -65,16 +67,18 @@ passport.use(new LocalStrategy(
     }
 ));
 
-app.post('/', 
-    passport.authenticate('local', { failureRedirect: '/error'}),
-    function(req, res) {
+app.post('/',
+    passport.authenticate('local', {
+        failureRedirect: '/error'
+    }),
+    function (req, res) {
         res.redirect('/success?username=' + req.user.username);
     });
 
 
-app.get('/', (req, res)=> {
-    res.sendFile('index.html', { root: __dirname 
-        // + '/public/' 
+app.get('/', (req, res) => {
+    res.sendFile('index.html', {
+        root: __dirname + '/public/'
     })
 });
 
@@ -83,4 +87,4 @@ app.get('/', (req, res)=> {
 
 
 
-app.listen(port , () => console.log(` server running on port  ${port}...`));
+app.listen(port, () => console.log(` server running on port  ${port}...`));
